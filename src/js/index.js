@@ -39,12 +39,15 @@ async function onSubmit(e) {
   io.unobserve(elObserv);
   gallery.innerHTML = '';
   searchImg.setSearchQuestion(e.currentTarget.elements.searchQuery.value);
-  const { totalHits, hits } = await fetchCard();
-  if (totalHits) {
-    Notiflix.Notify.success(`Hooray! We found ${totalHits} images.`);
+  const data = await fetchCard();
+    if (data && data.totalHits) {
+      totalHits = data.totalHits;
+    Notiflix.Notify.success(`Hooray! We found ${data.totalHits} images.`);
+    io.observe(elObserv);
+    handleResponce(data.hits);
+  } else {
+    io.observe(elObserv);
   }
-  io.observe(elObserv);
-  handleResponce(hits);
 }
 
 async function fetchCard() {
@@ -55,9 +58,12 @@ async function fetchCard() {
       throw new Error(
         'Sorry, there are no images matching your search query. Please try again'
       );
-    return data;
+    
+      totalHits = data.totalHits;
+      return { totalHits: data.totalHits, hits: data.hits };
   } catch (err) {
     Notiflix.Notify.failure(err.message);
+    return { hits: [], totalHits: 0 };
   } finally {
     Loading.remove();
   }
@@ -106,3 +112,5 @@ function renderImgCard(arrCard) {
     )
   );
 }
+
+
